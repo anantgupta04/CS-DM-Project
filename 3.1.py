@@ -31,26 +31,21 @@ for crit in subset.columns[-6:]:
     subset[crit] = (subset[crit] - np.min(subset[crit]))/(np.max(subset[crit]) - np.min(subset[crit]))
 
 # Pb. variables and utilities functions
-for ix,name in enumerate(subset.productname):
+for ix,name in enumerate(subset.productname.values):
     Sigma += [LpVariable('sigma_{}'.format(ix),0,1)]
-    U_x += [LpVariable(name,0,6)] # problem variables
-    V_x += [LpVariable(name,0,6)]
+    U_x += [LpVariable(name + '_u',0,6)] # problem variables
+    V_x += [LpVariable(name + '_v',0,6)]
     for crit in subset.columns[-6:]:
         U[crit][ix] = LpVariable('utility_{}_{}'.format(crit, name),0,1) #utility fn.
      
 # Objective function
-for i in range(len(U_x)):
-    prob += Sigma[i], "Adding all the sigma which we need to minimize."
-    #prob += lpSum(Sigma)
+prob += lpSum(Sigma)
 
 # Contraints associated to the global utility of each food
 maximize = ['fiber100g','proteins100g']
-for ix,name in enumerate(subset.productname):    
-    #import pdb;pdb.set_trace()
-#    prob += lpSum(i for i in U.loc[ix]) == U_x[ix], 'cereal_{} contraint'.format(name)
-    prob += lpSum(U.loc[ix]) == U_x[ix], 'cereal_{} contraint'.format(name)
+for ix,name in enumerate(subset.productname):
+    prob += lpSum(U.loc[ix].values) == U_x[ix], 'cereal_{} contraint'.format(name)
     prob +=  U_x[ix] + Sigma[ix] == V_x[ix]
-    print("u_x = ", U_x[ix])
     
 for crit in L_crit:
     if crit in maximize:
@@ -62,7 +57,7 @@ for crit in L_crit:
             prob += U[crit][ix] <= U[crit][ix+1]
         except KeyError:
             continue
-'''
+
 scores = ['a','b','c','d','e']
 for ix in range(len(scores)-1):
     score_round = scores[ix]
@@ -76,7 +71,7 @@ for ix in range(len(scores)-1):
         smaller_one = next_score[i]
         print("\nInside print\n",U_x[great_one],"------\t----",U_x[smaller_one])
         prob += (U_x[smaller_one]+eps) <= U_x[great_one]
- ''' 
+
  
 #prob += 0<eps
 # solve model
