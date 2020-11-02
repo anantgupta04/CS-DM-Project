@@ -3,7 +3,7 @@
 """
 Created on Sun Nov  1 17:51:47 2020
 
-@author: Cata
+@author: Cata lol
 """
 
 from pulp import *
