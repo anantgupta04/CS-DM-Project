@@ -20,7 +20,7 @@ L_crit = subset.columns[-6:]
 U_x = []
 V_x = []
 Sigma = []
-eps = 0.1
+eps = 0.3
 U = pd.DataFrame(index=np.arange(n_subset),columns=L_crit)
 
 prob = LpProblem("NutriScore", LpMinimize)
@@ -85,3 +85,123 @@ print("Statut:", LpStatus[prob.status])
 # Each of the variables is printed with it's resolved optimum value
 for v in prob.variables():
     print(v.name, "=", v.varValue)
+    
+    
+#%%
+
+# weight and limiting profiles for OpenFood_Petales
+w = {"energy100g":1,"saturatedfat100g":1,"sugars100g":1,"fiber100g":2,"proteins100g":2,"sodium100g":1}
+pi = pd.read_excel("limiting_profiles.xlsx")
+
+def PessimisticmajoritySorting(subset, pi, w, threshold):
+    w_sum = sum(w.values())
+#    passpi = pd.DataFrame(index=subset.productname, columns=pi.pi)
+    passpi = pd.DataFrame(index=subset.index, columns=pi.pi)
+    maximize = ['fiber100g','proteins100g']
+    New_Subset = subset.copy()
+#    for threshold in [0.5, 0.6, 0.7]:
+#        New_Subset['pessimistic_grade_'+str(threshold)] = ""
+    for ix, name in enumerate(subset.productname):
+        print('\nprod =', name)
+        for p in pi.pi:
+            s = 0
+            print('\npi =',p)
+            for crit in subset.columns[-6:]:
+                if crit not in maximize:
+                    if subset[crit][ix] <= pi[pi.pi==p][crit].values:
+                        s += w[crit]
+                else:
+                    if subset[crit][ix] >= pi[pi.pi==p][crit].values:
+                        s += w[crit]
+                
+            if s/w_sum >= threshold:
+#                passpi.loc[name,p] = True'
+                passpi.loc[ix,p] = True
+                break
+            else:
+#                passpi.loc[name,p] = False
+                passpi.loc[ix,p] = False
+            
+    for ix, line in passpi.iterrows():
+        for pi in line.index:
+            if line[pi] == True:
+                if pi == 'pi6' or pi == 'pi5':
+                    grade = 'a'
+                elif pi == 'pi4':
+                    grade = 'b'
+                elif pi == 'pi3':
+                    grade = 'c'
+                elif pi == 'pi2':
+                    grade = 'd'
+                else:
+                    grade = 'e'
+                print('grade =', grade)
+                New_Subset.loc[ix,'pessimistic_grade_'+str(threshold)] = grade
+            elif line[pi] == None:
+                break
+#        assert False
+#    return passpi
+    New_Subset.to_csv("New_Subsetito.csv", header=True)
+
+def Pess_1(subset, pi, w, threshold):
+    w_sum = sum(w.values())
+    maximize = ['fiber100g','proteins100g']
+    New_Subset = subset.copy()
+    for threshold in [0.5, 0.6, 0.7]:
+        New_Subset['pessimistic_grade_'+str(threshold)] = ""
+    for index, tup in subset.iterrows():
+        for p_index, value in (pi.iterrows()):
+            s = 0.
+            for crit in subset.columns[-6:]:
+                if crit not in maximize:
+                    if tup[crit] <= value[crit]:
+                        s += w[crit]
+                        print('minimize =',crit)
+                        print('s =',s)
+                else:
+                    if tup[crit] >= value[crit]: 
+                        s += w[crit]
+                        print('maxi =',crit)
+                        print('s =',s)
+            diff = s / w_sum
+            for threshold in [0.5, 0.6, 0.7]:
+                if diff >= threshold and not New_Subset.loc[index,'pessimistic_grade_'+str(threshold)] :
+                    if p_index in [0,1]:
+                        grade = 'a'
+                    elif p_index == 2:
+                        grade ='b'
+                    elif p_index == 3:
+                        grade = 'c'
+                    elif p_index == 4:
+                        grade ='d'
+                    elif p_index == 5:
+                        grade = 'e'
+                    New_Subset.loc[index,'pessimistic_grade_'+str(threshold)] = grade
+                    continue    
+
+    New_Subset.to_csv("New_Subseeet.csv", header=True)
+
+
+def OptimisticmajoritySorting():
+    pass
+    
+    
+    
+    
+    
+
+
+
+
+if __name__ == '__main__':
+    dataset = pd.read_excel("OpenFood_Petales.xlsx")
+    subset = pd.read_excel("OpenFood_Petales.xlsx", sheetname="SubDataSet", 
+                           headers=True)
+    subset.sort_values('nutriscorescore',inplace=True)
+    subset.reset_index(inplace=True)
+    
+    w = {"energy100g":1,"saturatedfat100g":1,"sugars100g":1,"fiber100g":2,"proteins100g":2,"sodium100g":1}
+    pi = pd.read_excel("limiting_profiles.xlsx")
+    
+    df = subset.copy()
+    Pess_1(df, pi, w, threshold)
