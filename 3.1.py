@@ -28,10 +28,7 @@ L_crit = subset.columns[-6:]
 U_x = []
 V_x = []
 Sigma = []
-<<<<<<< HEAD
-=======
-eps = 0.3
->>>>>>> b649aa64ccb7abcee47329f0e7e69d9ccef9e401
+
 U = pd.DataFrame(index=np.arange(n_subset),columns=L_crit)
 
 # define the problem and eps
