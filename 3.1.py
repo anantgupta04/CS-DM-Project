@@ -208,51 +208,59 @@ def Pess_1(subset, pi, w, threshold):
     New_Subset.to_csv("New_Subseeet.csv", header=True)
 
 
-def Optimistic_Anant(subset, pi, w, threshold):
+def Optimistic_Anant(subset, pi, w, threshold_range):
     w_sum = sum(w.values())
     maximize = ['fiber100g','proteins100g']
     New_Op_Subset = subset.copy()
-    
+
     pi = pi[::-1]  #reverse the dataframe
     pi.reset_index(inplace=True)
-    print(pi)
-    
-    for threshold in [0.5, 0.6, 0.7]:
-        New_Op_Subset['pessimistic_grade_'+str(threshold)] = ""
+
+    thresh_check = {}
+    for threshold in threshold_range:
+        New_Op_Subset['optimistic_grade_'+str(threshold)] = None
+        thresh_check[threshold] = True
     for index, tup in subset.iterrows():
-        print('\n\nindex= ',index)
-        for p_index, value in (pi.iterrows()):
+        print("--"*30)
+        print('\nproduct = ', tup['productname'])
+        prod_threshold = thresh_check.copy()
+        for p_index, value in pi.iterrows():
+            s, s_dash = 0., 0.
+            if not any(prod_threshold.values()):
+                break
             print('\npi =', value.pi)
-            s = 0.
-            for crit in subset.columns[-6:]: # the <= => change
-                if crit in maximize:
-                    if tup[crit] <= value[crit]:
-                        s += w[crit]
-                        print('min = ',crit)
-                        print('s =',s)
-                else:
+            for crit in subset.columns[-6:]:
+                # print("Criteria is = {} and tup-value is {}| P-table value is {}".format(crit, tup[crit], value[crit]))
+                if crit in maximize: # for criteria that we need to maximize
                     if tup[crit] >= value[crit]:
                         s += w[crit]
-                        print('max = ',crit)
-                        print('s =',s)
+                else: # for criteria that we need to minimize
+                    if tup[crit] <= value[crit]:
+                        s += w[crit]
             diff = s / w_sum
-            print('diff =', diff)
-            for threshold in [0.5, 0.6, 0.7]:
-                if not New_Op_Subset.loc[index,'pessimistic_grade_'+str(threshold)]\
-                    and diff > threshold: # Had to change
-                    if p_index in [4,5]:
-                        grade = 'a'
-                    elif p_index == 3:
-                        grade ='b'
-                    elif p_index == 2:
-                        grade = 'c'
-                    elif p_index == 1:
-                        grade ='d'
-                    elif p_index == 0:
+            s_dash = (w_sum - s) / w_sum
+            print('Value of s = {} | s(diff) = {} | s_dash = {}'.format(s,diff,s_dash))
+            for threshold in threshold_range:
+                grade = ""
+                if not prod_threshold[threshold]:
+                    break
+                if (diff >= threshold) and  not (s_dash >= threshold):
+                    if value.pi.lower() == "pi1":
                         grade = 'e'
-                    New_Op_Subset.loc[index,'pessimistic_grade_'+str(threshold)] = grade
-                    continue
-
+                    elif value.pi.lower() == "pi2":
+                        grade ='d'
+                    elif value.pi.lower() == "pi3":
+                        grade = 'c'
+                    elif value.pi.lower() == "pi4":
+                        grade ='b'
+                    elif value.pi.lower() in ["pi5", "pi6"]:
+                        grade = 'a'
+                    New_Op_Subset.loc[index,'optimistic_grade_'+str(threshold)] = grade
+                    print('For threshold = {}; Grade = {}'.format(threshold,grade))
+                else:
+                    prod_threshold[threshold] = False
+                    print("At threshold = {} | Flag check = {}".format(threshold,prod_threshold[threshold]))
+        print("\n\n")
     New_Op_Subset.to_csv("New_Op_Anant.csv", header=True)
 
 
@@ -262,7 +270,7 @@ def Optimistic_Cata(subset, pi, w, threshold):
     passpi = pd.DataFrame(index=subset.index, columns=pi.pi)
     maximize = ['fiber100g','proteins100g']
     New_Op_Subset = subset.copy()
-    
+
     pi = pi[::-1]  #reverse the dataframe
     pi.reset_index(inplace=True)
     print(pi)
@@ -284,16 +292,16 @@ def Optimistic_Cata(subset, pi, w, threshold):
                         s += w[crit]
                         print('max =', crit)
                         print('s =', s)
-                
+
             if s/w_sum > threshold: # CHANGES FROM >= to >
                 passpi.loc[ix,p] = True
                 break
             else:
                 passpi.loc[ix,p] = False
-            
+
     for ix, line in passpi.iterrows():
         for pi in line.index:
-            if line[pi] == True: 
+            if line[pi] == True:
                 if pi == 'pi6' or pi == 'pi5':
                     grade = 'a'
                 elif pi == 'pi4':
