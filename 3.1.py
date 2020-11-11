@@ -124,11 +124,11 @@ def plot_conf_matrix(df_confusion, title='Confusion matrix for lambda =', cmap=p
     tick_marks = np.arange(len(df_confusion.columns))
     plt.xticks(tick_marks, df_confusion.columns, rotation=45)
     plt.yticks(tick_marks, df_confusion.index)
-    
+
     plt.ylabel(df_confusion.index.name)
     plt.xlabel(df_confusion.columns.name)
-    
-    
+
+
 
 # weight and limiting profiles for OpenFood_Petales
 w = {"energy100g":1,"saturatedfat100g":1,"sugars100g":1,"fiber100g":2,"proteins100g":2,"sodium100g":1}
@@ -383,15 +383,16 @@ def Optimistic_Cata(subset, pi, w, threshold):
 
 
 if __name__ == '__main__':
+    threshold_range = [0.5,0.6,0.7]
     # data setup
-    dataset = pd.read_excel("OpenFood_Petales.xlsx")
-    subset = pd.read_excel("OpenFood_Petales.xlsx", sheet_name="SubDataSet",
+    dataset = pd.read_excel(PATH + "OpenFood_Petales.xlsx")
+    subset = pd.read_excel(PATH + "OpenFood_Petales.xlsx", sheet_name="SubDataSet",
                            headers=True)
     subset.sort_values('nutriscorescore',inplace=True)
     subset.reset_index(inplace=True)
 
     w = {"energy100g":1,"saturatedfat100g":1,"sugars100g":1,"fiber100g":2,"proteins100g":2,"sodium100g":1}
-    pi = pd.read_excel("limiting_profiles.xlsx")
+    pi = pd.read_excel(PATH + "limiting_profiles.xlsx")
 
     df = subset.copy()
 
@@ -400,5 +401,5 @@ if __name__ == '__main__':
 #    Pess_1(dataset, pi, w, [0.5,0.6,0.7])
 #    PessimisticmajoritySorting(subset, pi, w, 0.5)
 #    additive()
-    Optimistic_Anant(dataset, pi, w, [0.5,0.6,0.7])
+    Optimistic_Anant(dataset, pi, w, threshold_range)
 #    Optimistic_Cata(dataset, pi, w, 0.5)
