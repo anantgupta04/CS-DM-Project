@@ -114,6 +114,22 @@ def additive():
 
 #%%
 
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
+import matplotlib.pyplot as plt
+
+def plot_conf_matrix(df_confusion, title='Confusion matrix for lambda =', cmap=plt.get_cmap('Reds')):
+    plt.matshow(df_confusion, cmap=cmap) # imshow
+    plt.colorbar()
+    tick_marks = np.arange(len(df_confusion.columns))
+    plt.xticks(tick_marks, df_confusion.columns, rotation=45)
+    plt.yticks(tick_marks, df_confusion.index)
+    
+    plt.ylabel(df_confusion.index.name)
+    plt.xlabel(df_confusion.columns.name)
+    
+    
+
 # weight and limiting profiles for OpenFood_Petales
 w = {"energy100g":1,"saturatedfat100g":1,"sugars100g":1,"fiber100g":2,"proteins100g":2,"sodium100g":1}
 pi = pd.read_excel("limiting_profiles.xlsx")
@@ -127,10 +143,10 @@ def PessimisticmajoritySorting(subset, pi, w, threshold):
 #    for threshold in [0.5, 0.6, 0.7]:
 #        New_Subset['pessimistic_grade_'+str(threshold)] = ""
     for ix, name in enumerate(subset.productname):
-        print('\nprod =', name)
+#        print('\nprod =', name)
         for p in pi.pi:
             s = 0
-            print('\npi =',p)
+#            print('\npi =',p)
             for crit in subset.columns[-6:]:
                 if crit not in maximize:
                     if subset[crit][ix] <= pi[pi.pi==p][crit].values:
@@ -166,7 +182,16 @@ def PessimisticmajoritySorting(subset, pi, w, threshold):
                 break
 #        assert False
 #    return passpi
-    New_Subset.to_csv("New_Subsetito.csv", header=True)
+#    New_Subset.to_csv("New_Subsetito.csv", header=True)
+    y_actu = subset['nutriscoregrade']
+    y_pred = New_Subset['pessimistic_grade_'+str(threshold)]
+    print(confusion_matrix(y_actu, y_pred))
+    df_confusion = pd.crosstab(y_actu, y_pred)
+    df_conf_norm = df_confusion / df_confusion.sum(axis=1)
+    print(df_confusion)
+    print(df_conf_norm)
+    print('accuracy =', accuracy_score(y_actu,y_pred))
+    plot_conf_matrix(df_confusion, title='Confusion matrix for lambda ='.format(threshold))
 
 def Pess_1(subset, pi, w, threshold):
     w_sum = sum(w.values())
@@ -205,7 +230,20 @@ def Pess_1(subset, pi, w, threshold):
                     New_Subset.loc[index,'pessimistic_grade_'+str(threshold)] = grade
                     continue
 
-    New_Subset.to_csv("New_Subseeet.csv", header=True)
+#    New_Subset.to_csv("New_Subseeet.csv", header=True)
+    y_actu = subset['nutriscoregrade']
+    y_pred_05 = New_Subset['pessimistic_grade_0.5']
+    y_pred_06 = New_Subset['pessimistic_grade_0.6']
+    y_pred_07 = New_Subset['pessimistic_grade_0.7']
+#    print(confusion_matrix(y_actu, y_pred))
+#    df_confusion = pd.crosstab(y_actu, y_pred)
+#    df_conf_norm = df_confusion / df_confusion.sum(axis=1)
+#    print(df_confusion)
+#    print(df_conf_norm)
+    print('accuracy 0.5 =', accuracy_score(y_actu,y_pred_05))
+    print('accuracy 0.6 =', accuracy_score(y_actu,y_pred_06))
+    print('accuracy 0.7 =', accuracy_score(y_actu,y_pred_07))
+#    plot_conf_matrix(df_confusion, title='Confusion matrix for lambda ='.format(threshold))
 
 
 def Optimistic_Anant(subset, pi, w, threshold_range):
@@ -245,21 +283,34 @@ def Optimistic_Anant(subset, pi, w, threshold_range):
                 grade = ""
                 if (s_dash > threshold) \
                     and not New_Op_Subset.loc[index,'optimistic_grade_'+str(threshold)]:
-                    if value.pi.lower() == "pi1":
+                    if value.pi.lower() in ["pi1", "pi2"]:
                         grade = 'e'
-                    elif value.pi.lower() == "pi2":
-                        grade = 'd'
                     elif value.pi.lower() == "pi3":
-                        grade = 'c'
+                        grade = 'd'
                     elif value.pi.lower() == "pi4":
+                        grade = 'c'
+                    elif value.pi.lower() == "pi5":
                         grade = 'b'
-                    elif value.pi.lower() in ["pi5", "pi6"]:
+                    elif value.pi.lower() == "pi6":
                         grade = 'a'
                     New_Op_Subset.loc[index,'optimistic_grade_'+str(threshold)] = grade
                     prod_threshold[threshold] = False
                     print("At threshold = {} | Grade = {} | Flag check = {}".format(threshold,grade,prod_threshold[threshold]))
         print("\n\n")
     New_Op_Subset.to_csv("New_Op_Anant.csv", header=True)
+    y_actu = subset['nutriscoregrade']
+    y_pred_05 = New_Op_Subset['optimistic_grade_0.5']
+    y_pred_06 = New_Op_Subset['optimistic_grade_0.6']
+    y_pred_07 = New_Op_Subset['optimistic_grade_0.7']
+#    print(confusion_matrix(y_actu, y_pred))
+    df_confusion_05 = pd.crosstab(y_actu, y_pred_05)
+#    df_conf_norm = df_confusion / df_confusion.sum(axis=1)
+    print(df_confusion_05)
+#    print(df_conf_norm)
+    plot_conf_matrix(df_confusion_05, title='Confusion matrix for lambda ='.format(threshold))
+    print('accuracy 0.5 =', accuracy_score(y_actu,y_pred_05))
+    print('accuracy 0.6 =', accuracy_score(y_actu,y_pred_06))
+    print('accuracy 0.7 =', accuracy_score(y_actu,y_pred_07))
 
 
 
@@ -300,22 +351,32 @@ def Optimistic_Cata(subset, pi, w, threshold):
     for ix, line in passpi.iterrows():
         for pi in line.index:
             if line[pi] == True:
-                if pi == 'pi6' or pi == 'pi5':
+                if pi == 'pi6':
                     grade = 'a'
-                elif pi == 'pi4':
+                elif pi == 'pi5':
                     grade = 'b'
-                elif pi == 'pi3':
+                elif pi == 'pi4':
                     grade = 'c'
-                elif pi == 'pi2':
+                elif pi == 'pi3':
                     grade = 'd'
-                else:
+                elif pi in ['pi1', 'pi2']:
                     grade = 'e'
                 print('grade =', grade)
                 New_Op_Subset.loc[ix,'optimistic_grade_'+str(threshold)] = grade
             elif line[pi] == None:
                 break
 #        assert False
-    return passpi
+    print(passpi)
+#    New_Op_Subset.to_csv("New_Op_Cata.csv", header=True)
+    y_actu = subset['nutriscoregrade']
+    y_pred = New_Op_Subset['optimistic_grade_'+str(threshold)]
+#    print(confusion_matrix(y_actu, y_pred))
+    df_confusion = pd.crosstab(y_actu, y_pred)
+#    df_conf_norm = df_confusion / df_confusion.sum(axis=1)
+#    print(df_confusion)
+#    print(df_conf_norm)
+    print('accuracy =', accuracy_score(y_actu,y_pred))
+#    plot_conf_matrix(df_confusion, title='Confusion matrix for lambda ='.format(threshold))
 
 
 
@@ -336,7 +397,8 @@ if __name__ == '__main__':
 
 
     # function calls
-#    Pess_1(df, pi, w, [0.5,0.6,0.7])
+#    Pess_1(dataset, pi, w, [0.5,0.6,0.7])
+#    PessimisticmajoritySorting(subset, pi, w, 0.5)
 #    additive()
-    Optimistic_Anant(subset, pi, w, [0.5,0.6,0.7])
-#    Optimistic_Cata(subset, pi, w, 0.5)
+    Optimistic_Anant(dataset, pi, w, [0.5,0.6,0.7])
+#    Optimistic_Cata(dataset, pi, w, 0.5)
