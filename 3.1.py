@@ -225,41 +225,39 @@ def Optimistic_Anant(subset, pi, w, threshold_range):
         print('\nproduct = ', tup['productname'])
         prod_threshold = thresh_check.copy()
         for p_index, value in pi.iterrows():
-            s, s_dash = 0., 0.
+            pi_sum, s_dash = 0., 0.
             if not any(prod_threshold.values()):
                 break
             print('\npi =', value.pi)
             for crit in subset.columns[-6:]:
                 # print("Criteria is = {} and tup-value is {}| P-table value is {}".format(crit, tup[crit], value[crit]))
                 if crit in maximize: # for criteria that we need to maximize
-                    if tup[crit] >= value[crit]:
-                        s += w[crit]
-                else: # for criteria that we need to minimize
                     if tup[crit] <= value[crit]:
-                        s += w[crit]
-            diff = s / w_sum
-            s_dash = (w_sum - s) / w_sum
-            print('Value of s = {} | s(diff) = {} | s_dash = {}'.format(s,diff,s_dash))
+                        pi_sum += w[crit]
+                else: # for criteria that we need to minimize
+                    if tup[crit] >= value[crit]:
+                        pi_sum += w[crit]
+
+            diff = (w_sum - pi_sum) / w_sum
+            s_dash = (pi_sum) / w_sum
+            print('Value of pi = {} | s(diff) = {} | s_dash = {}'.format(pi_sum,diff,s_dash))
             for threshold in threshold_range:
                 grade = ""
-                if not prod_threshold[threshold]:
-                    break
-                if (diff >= threshold) and  not (s_dash >= threshold):
+                if (s_dash > threshold) \
+                    and not New_Op_Subset.loc[index,'optimistic_grade_'+str(threshold)]:
                     if value.pi.lower() == "pi1":
                         grade = 'e'
                     elif value.pi.lower() == "pi2":
-                        grade ='d'
+                        grade = 'd'
                     elif value.pi.lower() == "pi3":
                         grade = 'c'
                     elif value.pi.lower() == "pi4":
-                        grade ='b'
+                        grade = 'b'
                     elif value.pi.lower() in ["pi5", "pi6"]:
                         grade = 'a'
                     New_Op_Subset.loc[index,'optimistic_grade_'+str(threshold)] = grade
-                    print('For threshold = {}; Grade = {}'.format(threshold,grade))
-                else:
                     prod_threshold[threshold] = False
-                    print("At threshold = {} | Flag check = {}".format(threshold,prod_threshold[threshold]))
+                    print("At threshold = {} | Grade = {} | Flag check = {}".format(threshold,grade,prod_threshold[threshold]))
         print("\n\n")
     New_Op_Subset.to_csv("New_Op_Anant.csv", header=True)
 
