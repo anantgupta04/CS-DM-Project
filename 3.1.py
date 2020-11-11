@@ -270,10 +270,10 @@ def Optimistic_Anant(subset, pi, w, threshold_range):
             for crit in subset.columns[-6:]:
                 # print("Criteria is = {} and tup-value is {}| P-table value is {}".format(crit, tup[crit], value[crit]))
                 if crit in maximize: # for criteria that we need to maximize
-                    if tup[crit] <= value[crit]:
+                    if tup[crit] < value[crit]:
                         pi_sum += w[crit]
                 else: # for criteria that we need to minimize
-                    if tup[crit] >= value[crit]:
+                    if tup[crit] > value[crit]:
                         pi_sum += w[crit]
 
             diff = (w_sum - pi_sum) / w_sum
@@ -332,12 +332,12 @@ def Optimistic_Cata(subset, pi, w, threshold):
             print('\npi =',p)
             for crit in subset.columns[-6:]:
                 if crit not in maximize:
-                    if subset[crit][ix] >= pi[pi.pi==p][crit].values:
+                    if subset[crit][ix] > pi[pi.pi==p][crit].values:
                         s += w[crit]
                         print('min =', crit)
                         print('s =', s)
                 else:
-                    if subset[crit][ix] <= pi[pi.pi==p][crit].values:
+                    if subset[crit][ix] < pi[pi.pi==p][crit].values:
                         s += w[crit]
                         print('max =', crit)
                         print('s =', s)
@@ -366,8 +366,9 @@ def Optimistic_Cata(subset, pi, w, threshold):
             elif line[pi] == None:
                 break
 #        assert False
+                
     print(passpi)
-#    New_Op_Subset.to_csv("New_Op_Cata.csv", header=True)
+    New_Op_Subset.to_csv("New_Op_Cata.csv", header=True)
     y_actu = subset['nutriscoregrade']
     y_pred = New_Op_Subset['optimistic_grade_'+str(threshold)]
 #    print(confusion_matrix(y_actu, y_pred))
