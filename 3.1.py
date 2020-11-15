@@ -259,29 +259,40 @@ def Optimistic_Anant(subset, pi, w, threshold_range):
         New_Op_Subset['optimistic_grade_'+str(threshold)] = None
         thresh_check[threshold] = True
     for index, tup in subset.iterrows():
-        print("--"*30)
-        print('\nproduct = ', tup['productname'])
+        # print("--"*30)
+        # print('\nproduct = ', tup['productname'])
         prod_threshold = thresh_check.copy()
         for p_index, value in pi.iterrows():
-            pi_sum, s_dash = 0., 0.
+            pi_sum, s_sum, s_dash = 0., 0., 0
             if not any(prod_threshold.values()):
                 break
-            print('\npi =', value.pi)
+            # print('\npi =', value.pi)
             for crit in subset.columns[-6:]:
                 # print("Criteria is = {} and tup-value is {}| P-table value is {}".format(crit, tup[crit], value[crit]))
                 if crit in maximize: # for criteria that we need to maximize
                     if tup[crit] < value[crit]:
                         pi_sum += w[crit]
+                    elif tup[crit] == value[crit]:
+                        pi_sum += w[crit]
+                        s_sum += w[crit]
+                    else:
+                        s_sum += w[crit]
                 else: # for criteria that we need to minimize
                     if tup[crit] > value[crit]:
                         pi_sum += w[crit]
+                    elif tup[crit] == value[crit]:
+                        pi_sum += w[crit]
+                        s_sum += w[crit]
+                    else:
+                        s_sum += w[crit]
 
-            diff = (w_sum - pi_sum) / w_sum
+
+            diff = (s_sum) / w_sum
             s_dash = (pi_sum) / w_sum
-            print('Value of pi = {} | s(diff) = {} | s_dash = {}'.format(pi_sum,diff,s_dash))
+            # print('Value of pi_sum = {} | pi_sum/w | s_sum = {} | s/w = {}'.format(pi_sum,s_dash,s_sum,diff))
             for threshold in threshold_range:
                 grade = ""
-                if (s_dash > threshold) \
+                if (s_dash >= threshold) and (not diff >= threshold ) \
                     and not New_Op_Subset.loc[index,'optimistic_grade_'+str(threshold)]:
                     if value.pi.lower() in ["pi1", "pi2"]:
                         grade = 'e'
@@ -295,9 +306,9 @@ def Optimistic_Anant(subset, pi, w, threshold_range):
                         grade = 'a'
                     New_Op_Subset.loc[index,'optimistic_grade_'+str(threshold)] = grade
                     prod_threshold[threshold] = False
-                    print("At threshold = {} | Grade = {} | Flag check = {}".format(threshold,grade,prod_threshold[threshold]))
-        print("\n\n")
-    New_Op_Subset.to_csv("New_Op_Anant.csv", header=True)
+                    # print("At threshold = {} | Grade = {} | Flag check = {}".format(threshold,grade,prod_threshold[threshold]))
+        # print("\n\n")
+    # New_Op_Subset.to_csv("New_Op_Anant_Test.csv", header=True)
     y_actu = subset['nutriscoregrade']
     y_pred_05 = New_Op_Subset['optimistic_grade_0.5']
     y_pred_06 = New_Op_Subset['optimistic_grade_0.6']
@@ -366,7 +377,7 @@ def Optimistic_Cata(subset, pi, w, threshold):
             elif line[pi] == None:
                 break
 #        assert False
-                
+
     print(passpi)
     New_Op_Subset.to_csv("New_Op_Cata.csv", header=True)
     y_actu = subset['nutriscoregrade']
@@ -403,4 +414,5 @@ if __name__ == '__main__':
 #    PessimisticmajoritySorting(subset, pi, w, 0.5)
 #    additive()
     Optimistic_Anant(dataset, pi, w, threshold_range)
+    # Optimistic_Anant(dataset.iloc[40:44], pi, w, threshold_range)
 #    Optimistic_Cata(dataset, pi, w, 0.5)
