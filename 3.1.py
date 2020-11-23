@@ -142,10 +142,10 @@ def Pess_1(subset, pi, w, threshold):
 #    df_conf_norm = df_confusion / df_confusion.sum(axis=1)
 #    print(df_confusion)
 #    print(df_conf_norm)
-    print('accuracy 0.5 =', accuracy_score(y_actu,y_pred_05))
-    print('accuracy 0.6 =', accuracy_score(y_actu,y_pred_06))
-    print('accuracy 0.7 =', accuracy_score(y_actu,y_pred_07))
-#    plot_conf_matrix(df_confusion, title='Confusion matrix for lambda ='.format(threshold))
+#    print('accuracy 0.5 =', accuracy_score(y_actu,y_pred_05))
+#    print('accuracy 0.6 =', accuracy_score(y_actu,y_pred_06))
+#    print('accuracy 0.7 =', accuracy_score(y_actu,y_pred_07))
+    plot_conf_matrix(df_confusion, title='Confusion matrix for lambda ='.format(threshold))
 
 
 def Optimistic_Anant(subset, pi, w, threshold_range):
@@ -217,13 +217,16 @@ def Optimistic_Anant(subset, pi, w, threshold_range):
     y_pred_07 = New_Op_Subset['optimistic_grade_0.7']
 #    print(confusion_matrix(y_actu, y_pred))
     df_confusion_05 = pd.crosstab(y_actu, y_pred_05)
+    df_confusion_06 = pd.crosstab(y_actu, y_pred_06)
+    df_confusion_07 = pd.crosstab(y_actu, y_pred_07)
 #    df_conf_norm = df_confusion / df_confusion.sum(axis=1)
-    print(df_confusion_05)
+    print(df_confusion_07)
 #    print(df_conf_norm)
-    plot_conf_matrix(df_confusion_05, title='Confusion matrix for lambda ='.format(threshold))
+    
     print('accuracy 0.5 =', accuracy_score(y_actu,y_pred_05))
     print('accuracy 0.6 =', accuracy_score(y_actu,y_pred_06))
     print('accuracy 0.7 =', accuracy_score(y_actu,y_pred_07))
+    plot_conf_matrix(df_confusion_07, title='Confusion matrix for lambda ='.format(threshold))
 
 
 
@@ -242,15 +245,16 @@ def Optimistic_Cata(subset, pi, w, threshold):
         print('\nprod =', name)
         for p in pi.pi:
             s = 0
+            
             print('\npi =',p)
             for crit in subset.columns[-6:]:
                 if crit not in maximize:
-                    if subset[crit][ix] > pi[pi.pi==p][crit].values:
+                    if subset[crit][ix] >= pi[pi.pi==p][crit].values :
                         s += w[crit]
                         print('min =', crit)
                         print('s =', s)
                 else:
-                    if subset[crit][ix] < pi[pi.pi==p][crit].values:
+                    if subset[crit][ix] <= pi[pi.pi==p][crit].values:
                         s += w[crit]
                         print('max =', crit)
                         print('s =', s)
@@ -290,7 +294,7 @@ def Optimistic_Cata(subset, pi, w, threshold):
 #    print(df_confusion)
 #    print(df_conf_norm)
     print('accuracy =', accuracy_score(y_actu,y_pred))
-#    plot_conf_matrix(df_confusion, title='Confusion matrix for lambda ='.format(threshold))
+    plot_conf_matrix(df_confusion, title='Confusion matrix for lambda ='.format(threshold))
 
 
 
@@ -314,7 +318,9 @@ if __name__ == '__main__':
 
     # function calls
 #    Pess_1(dataset, pi, w, [0.5,0.6,0.7])
+
 #    PessimisticmajoritySorting(subset, pi, w, 0.5)
-    # Optimistic_Anant(dataset, pi, w, threshold_range)
+    # Optimistic_Anant(dataset, pi, w, threshold_range)\
     # Optimistic_Anant(dataset.iloc[40:44], pi, w, threshold_range)
-#    Optimistic_Cata(dataset, pi, w, 0.5)
+#    Optimistic_Cata(dataset, pi, w, 0.7)
+#
