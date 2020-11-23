@@ -7,8 +7,8 @@ Created on Sun Nov  1 17:51:47 2020
 """
 
 # PATH = "https://github.com/anantgupta04/CS-DM-Project/blob/main/OpenFood_Petales.xlsx?raw=true"
-# PATH = "C:\\Users\\akhilg\\Documents\\CollegeDocuments\\BDMA\\CentralSuperlec\\Coursework\\DM\\Assignments\\Final Project\\"
-PATH = "https://raw.github.com/anantgupta04/CS-DM-Project/main/"
+PATH = "C:\\Users\\akhilg\\Documents\\CollegeDocuments\\BDMA\\CentralSuperlec\\Coursework\\DM\\Assignments\\Final Project\\"
+# PATH = "https://raw.github.com/anantgupta04/CS-DM-Project/main/"
 
 
 
@@ -16,102 +16,7 @@ from pulp import (LpMaximize, LpVariable, lpSum, LpStatus, LpProblem)
 import pandas as pd
 import numpy as np
 
-
-
-
-def additive():
-    # reading the data 1
-    main_df = pd.read_excel(PATH + "OpenFood_Petales.xlsx")
-    dataset  = main_df.head(15)
-    subset = pd.read_excel((PATH + "OpenFood_Petales.xlsx"), sheet_name="SubDataSet")
-
-    nutrigrades = main_df['nutriscoregrade'].unique()
-    print("nutrigrades present in the DB are = ", nutrigrades)
-
-    subset.sort_values('nutriscorescore',inplace=True)
-    subset.reset_index(inplace=True)
-    n_subset = len(dataset)
-    L_crit = subset.columns[-6:]
-
-    U_x = []
-    V_x = []
-    Sigma = []
-
-    U = pd.DataFrame(index=np.arange(n_subset),columns=L_crit)
-
-    # define the problem and eps
-    prob = LpProblem("NutriScore", LpMaximize)
-    eps = [LpVariable("epsilion_{}_{}".format(nutrigrades[i],nutrigrades[i+1]),0.1,10)
-                for i in range(len(nutrigrades)-1)]
-    print("Eps = ",eps)
-
-    print("Length of the original in dataset = ",len(dataset.productname.values))
-
-    # Pb. variables and utilities functions
-    for ix,tup in dataset.iterrows():
-        U_x += [LpVariable("U_{}".format(ix), 0, 10)] # problem variables
-        V_x += [LpVariable("V_{}".format(ix), 0, 20)]
-
-        for crit in L_crit:
-            # print("The value for product {} has {} = {}. Type is {}".format(tup['productname'],
-            #             crit, tup[crit], type(tup[crit])))
-            U[crit][ix] = LpVariable('utility_{}_{}_{}'.format(crit, tup[crit],ix),0,1) #utility fn.
-
-
-    # Objective function
-    prob += lpSum(eps)
-
-    # Contraints associated to the global utility of each food
-    for ix,name in enumerate(dataset.productname):
-        #print("Product Name = {1}\nUtility func'n = {0}\n ".format(U.loc[ix].values,name))
-        prob += lpSum(U.loc[ix].values) == U_x[ix], 'cerealU_{1}_{0} contraint'.format(name,ix)
-        # prob +=  U_x[ix] + Sigma[ix] == V_x[ix], 'cerealV_{1}_{0} contraint'.format(name,ix)
-
-    maximize = ['fiber100g','proteins100g']
-    for crit in L_crit:
-        if crit in maximize:
-            sorted_c = dataset[crit].sort_values(ascending=True)
-        else:
-            sorted_c = dataset[crit].sort_values(ascending=False)
-        for i in range(len(sorted_c)-1):
-            index_1 = sorted_c.index[i]
-            index_2 = sorted_c.index[i+1]
-            if sorted_c[i] != sorted_c[i+1]:
-                    prob += (U[crit][index_1] ) <= U[crit][index_2]
-            elif sorted_c[i] == sorted_c[i+1]:
-                print("inside elif")
-                prob += U[crit][index_1] == U[crit][index_2]
-
-    for ix in range(len(nutrigrades)-1):
-        score_round = nutrigrades[ix]
-        eps_round = eps[ix]
-        print("eps_round for {} is {}".format(score_round,eps_round))
-        tup = subset[subset.nutriscoregrade == score_round].index
-        #print("\n\ntup ={0}. Scores of this round= {1} ".format(tup,score_round))
-        next_score = subset[subset.nutriscoregrade == nutrigrades[ix+1]].index
-        len_max = max(len(tup),len(next_score))
-        #for i in subset[subset.nutriscoregrade == scores[ix+1]].index: #(subset.loc[subset.nutriscoregrade != ix]):
-        for i in range(len_max):
-            great_one = tup[i]
-            smaller_one = next_score[i]
-            #print("\nInside print\n",U_x[great_one],"------\t----",U_x[smaller_one])
-            prob += (U_x[smaller_one] + eps_round) <= U_x[great_one]
-
-    # The problem data is written to an .lp file
-    prob.writeLP("The Nutriscore.lp")
-
-    # solve model
-    prob.solve()
-
-    # The status of the solution is printed to the screen
-    print("\n\n!!!Status: {}\n\n".format(LpStatus[prob.status]))
-    # Output= # Status: Optimal
-
-    # Each of the variables is printed with it's resolved optimum value
-    for v in prob.variables():
-        print(v.name, "=", v.varValue)
-
-
+from sklearn.model_selection import train_test_split
 #%%
 
 from sklearn.metrics import confusion_matrix
@@ -130,9 +35,6 @@ def plot_conf_matrix(df_confusion, title='Confusion matrix for lambda =', cmap=p
 
 
 
-# weight and limiting profiles for OpenFood_Petales
-w = {"energy100g":1,"saturatedfat100g":1,"sugars100g":1,"fiber100g":2,"proteins100g":2,"sodium100g":1}
-pi = pd.read_excel("limiting_profiles.xlsx")
 
 def PessimisticmajoritySorting(subset, pi, w, threshold):
     w_sum = sum(w.values())
@@ -407,17 +309,18 @@ if __name__ == '__main__':
     subset.sort_values('nutriscorescore',inplace=True)
     subset.reset_index(inplace=True)
 
+
     w = {"energy100g":1,"saturatedfat100g":1,"sugars100g":1,"fiber100g":2,"proteins100g":2,"sodium100g":1}
-    pi = pd.read_excel(PATH + "limiting_profiles.xlsx")
+    # pi = pd.read_excel(PATH + "limiting_profiles.xlsx")
 
     df = subset.copy()
 
 
     # function calls
 #    Pess_1(dataset, pi, w, [0.5,0.6,0.7])
-#    PessimisticmajoritySorting(dataset, pi, w, 0.5)
-#    additive()
-    Optimistic_Anant(dataset, pi, w, threshold_range)
+
+#    PessimisticmajoritySorting(subset, pi, w, 0.5)
+    # Optimistic_Anant(dataset, pi, w, threshold_range)\
     # Optimistic_Anant(dataset.iloc[40:44], pi, w, threshold_range)
 #    Optimistic_Cata(dataset, pi, w, 0.7)
 #
