@@ -8,7 +8,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 PATH = "C:\\Users\\akhilg\\Documents\\CollegeDocuments\\BDMA\\CentralSuperlec\\Coursework\\DM\\Assignments\\Final Project\\"
-# PATH = "https://raw.github.com/anantgupta04/CS-DM-Project/main/"
+# PATH = "https://raw.github.com/anantgupta04/CS-DM-Project/main/data"
 
 
 FEATURES = ['energy100g','saturatedfat100g', 'sugars100g', 'fiber100g',
