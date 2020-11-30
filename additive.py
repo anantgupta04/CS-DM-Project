@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from pulp import (LpMaximize, LpVariable, lpSum, LpStatus, LpProblem)
+import os
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -38,7 +39,7 @@ class Additive():
         self.initial = initial
         self.terminal = terminal
         self.choice = choice
-        self.prob = LpProblem(f"NutriScore Additive Model_{choice}",
+        self.prob = LpProblem(f"NutriScore Additive Model_{str(choice)}",
                             LpMaximize)
         self.eps = []
         self.dataset, self.preferences = pd.DataFrame(), pd.DataFrame()
@@ -53,7 +54,7 @@ class Additive():
         self._monotonicity_constraints()
         self._rank_preference()
         # The problem data is written to an .lp file
-        self.prob.writeLP(f"NutriScore Additive Model_{self.choice}.lp")
+        # self.prob.writeLP(f"NutriScore Additive Model_{str(self.choice)}.lp")
 
         # solve model
         self.prob.solve()
@@ -65,6 +66,7 @@ class Additive():
             print("\nCongratulations the problem has been successfully solved.\n")
             print("***"*20)
             self._save_results()
+            self._change_path()
             self._plot_global_utility()
             self._plot_attributes()
         return self.dataset
@@ -76,15 +78,15 @@ class Additive():
             self.dataset = main_df.copy().sort_values(by=['nutriscorescore'])
             self.dataset.reset_index(inplace=True, drop=True)
             self.preference = pd.read_excel(PATH + "\data\OpenFood_Petales_Preference.xlsx")
-        else:  # Your own scrapped DB
-            pass
+        else:  # Our own scrapped DB
+            main_df, self.preference = split_second_db()
+            self.dataset = main_df.copy().sort_values(by=['nutriscorescore'])
+            self.dataset.reset_index(inplace=True, drop=True)
         # some checks on the length and the grades of the SubDataSet
         nutrigrades = self.dataset['nutriscoregrade'].unique()
         print("nutrigrades present in the DB are = ", nutrigrades)
 
         self.samples = len(self.dataset)
-        # print("Length of the original in dataset = ",len(dataset.productname.values))
-        # print("Length of the original in dataset = ",len(preference.productname.values))
 
     def _objective_variables(self):
         # define the eps
@@ -138,7 +140,7 @@ class Additive():
             eps_round = self.eps[idx]
             g1 = self.preference[self.preference.nutriscoregrade == score_round].index
             g2 = self.preference[self.preference.nutriscoregrade == GRADES[idx+1]].index
-
+            # import pdb; pdb.set_trace()
             from itertools import cycle
             zip_list = zip(g1, cycle(g2)) if len(g1) > len(g2) else zip(cycle(g1), g2)
             for g1_i, g2_i in zip_list:
@@ -171,18 +173,62 @@ class Additive():
         sns_plot.get_figure().savefig(f"additive_score_inference.png")
 
     def _plot_attributes(self):
+
         for criterion in FEATURES:
             values_df = self.dataset[[criterion]]
             variable_values = [i.varValue for i in self.U[criterion]]
 
             values_df["marginal_utility_value"] = variable_values
-            values_df.plot(kind="scatter", x=criterion, y="marginal_utility_value")
+            # kind="scatter",
+            sns.relplot( x=criterion, y="marginal_utility_value",
+                        data=values_df)
             plt.savefig(f"{criterion}_mariginal_utility_plot.png")
 
     '''
     dataset.to_csv("calculated scores.csv")
     '''
 
+    def _change_path(self):
+        choice = "OpenFood_Petales" if self.choice ==1 else "Own Database11"
+        target = f"./Images/Additive/{choice}"
+        if not os.path.exists(target):
+            # print("\n\n GRADE-{} Folder created successfully".format(grade.upper()))
+            os.makedirs(target, mode=0o777)
+            os.chdir(target)
+
+def split_second_db():
+    # read the big DB
+
+    main_df = pd.read_excel(PATH + "data\\additive_2.xlsx",
+                        sheet_name="new_data")
+    # preference = pd.read_excel(PATH + "data\\additive_2.xlsx",
+    #                     sheet_name="Preference")
+
+    main_df.drop(['Unnamed: 0'], axis=1, inplace=True)
+    print("length of db is = ", len(main_df))
+
+    new_df = pd.DataFrame()
+    preference = pd.DataFrame()
+    for grade in GRADES:
+        # sheet = f"Grade {grade.upper()}"
+        grade_sheet = main_df.iloc[
+                    np.where(main_df.nutriscoregrade == grade)
+                ].sample(n=200, random_state=40)
+        new_df = pd.concat([new_df, grade_sheet])
+        preference_sheet = grade_sheet.sample(n=60, random_state=10)
+        preference = pd.concat([preference, preference_sheet])
+
+    new_df.to_csv("data\own_DB11.csv")
+    preference.to_csv("data\own_DB_preference11.csv")
+    preference.reset_index(inplace=True, drop=True)
+    return new_df, preference
+
+
+
 if __name__ == '__main__':
-    ob1 = Additive(1)
-    ob1.execute()
+    # ob1 = Additive(1)
+    # ob1.execute()
+
+
+    ob2 = Additive(2)
+    ob2.execute()
