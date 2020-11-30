@@ -14,7 +14,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sn
 from string import ascii_uppercase
-from Limiting_Profiles import limiting_profiles_dist, limiting_profiles
+from Limiting_Profiles import limiting_profiles_dist
 from additive import PATH
 
 
@@ -164,7 +164,7 @@ if __name__ == '__main__':
     dataset.sort_values('nutriscorescore',inplace=True)
     dataset.reset_index(inplace=True)
     w = {"energy100g":1,"saturatedfat100g":1,"sugars100g":1,"fiber100g":2,"proteins100g":2,"sodium100g":1}
-    pi = pd.read_excel("limiting_profiles.xlsx")
+    pi = pd.read_excel(PATH + "limiting_profiles.xlsx")
     
     # data setup Second Database
     dataset_2 = pd.read_csv(PATH + "new_data.csv")
