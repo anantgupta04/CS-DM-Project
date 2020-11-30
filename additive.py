@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 from pulp import (LpMaximize, LpVariable, lpSum, LpStatus, LpProblem)
 import os
 import pandas as pd
@@ -8,8 +5,8 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-#PATH = "C:\\Users\\akhilg\\Documents\\CollegeDocuments\\BDMA\\CentralSuperlec\\Coursework\\DM\\Assignments\\Final Project\\"
-PATH = "https://raw.github.com/anantgupta04/CS-DM-Project/main/data/"
+PATH = "C:\\Users\\akhilg\\Documents\\CollegeDocuments\\BDMA\\CentralSuperlec\\Coursework\\DM\\Assignments\\Final Project\\"
+# PATH = "https://raw.github.com/anantgupta04/CS-DM-Project/main/"
 
 
 FEATURES = ['energy100g','saturatedfat100g', 'sugars100g', 'fiber100g',
@@ -17,20 +14,6 @@ FEATURES = ['energy100g','saturatedfat100g', 'sugars100g', 'fiber100g',
 MAXIMIZE = ['fiber100g','proteins100g']
 GRADES = ["a", "b", "c", "d", "e"]
 
-
-"""
-def sample(data):
-    total_len = len(data)
-    cols = data.columns
-    train_cols = cols.copy()
-    x, y = data[cols].drop(['nutriscoregrade'],axis=1), data['nutriscoregrade']
-    X_train, X_test, y_train, y_test = train_test_split(
-        x, y, test_size=0.2, random_state=42)
-    train = X_train.join(y_train)
-    test = X_test.join(y_test)
-    print("Test database  = \n\n", test)
-    return train, y_test
-    """
 
 class Additive():
 
@@ -109,7 +92,6 @@ class Additive():
 
         # Contraints associated to the global utility of each food
         for idx,name in enumerate(self.dataset.productname):
-            #print("Product Name = {1}\nUtility func'n = {0}\n ".format(U.loc[ix].values,name))
             self.prob += lpSum(self.U.loc[idx].values) == self.U_x[idx], \
                             f"cerealU_{idx}_{name} contraint"
 
@@ -127,7 +109,6 @@ class Additive():
                             self.prob += (self.U[crit][index_1] ) <= \
                                 self.U[crit][index_2]
                     elif sorted_c[index_1] == sorted_c[index_2]:
-                        #print("inside elif")
                         self.prob += self.U[crit][index_1] == self.U[crit][index_2]
                 except Exception as e:
                     print("Exception occured = ",e)
@@ -140,7 +121,6 @@ class Additive():
             eps_round = self.eps[idx]
             g1 = self.preference[self.preference.nutriscoregrade == score_round].index
             g2 = self.preference[self.preference.nutriscoregrade == GRADES[idx+1]].index
-            # import pdb; pdb.set_trace()
             from itertools import cycle
             zip_list = zip(g1, cycle(g2)) if len(g1) > len(g2) else zip(cycle(g1), g2)
             for g1_i, g2_i in zip_list:
@@ -156,8 +136,6 @@ class Additive():
                 except Exception as e:
                     print("Exception inside for for preference\nvalue of g2_i is {} and g1_i {}".format(g2_i,g1_i))
                     assert False
-                # print("\nInside print\n",self.dataset['nutriscoregrade'].iloc[low],"------\t----",self.dataset['nutriscoregrade'].iloc[high])
-                # print("Values of U_x[{}] is {}\tValues of U_x[{}] is {} ".format(low,self.U_x[low],high,self.U_x[high]))
                 self.prob += (self.U_x[low] + eps_round) <= self.U_x[high]
 
     def _save_results(self):
@@ -179,7 +157,6 @@ class Additive():
             variable_values = [i.varValue for i in self.U[criterion]]
 
             values_df["marginal_utility_value"] = variable_values
-            # kind="scatter",
             sns.relplot( x=criterion, y="marginal_utility_value",
                         data=values_df)
             plt.savefig(f"{criterion}_mariginal_utility_plot.png")
@@ -189,10 +166,9 @@ class Additive():
     '''
 
     def _change_path(self):
-        choice = "OpenFood_Petales" if self.choice ==1 else "Own Database11"
+        choice = "OpenFood_Petales22" if self.choice ==1 else "Own Database22"
         target = f"./Images/Additive/{choice}"
         if not os.path.exists(target):
-            # print("\n\n GRADE-{} Folder created successfully".format(grade.upper()))
             os.makedirs(target, mode=0o777)
             os.chdir(target)
 
@@ -201,8 +177,6 @@ def split_second_db():
 
     main_df = pd.read_excel(PATH + "data\\additive_2.xlsx",
                         sheet_name="new_data")
-    # preference = pd.read_excel(PATH + "data\\additive_2.xlsx",
-    #                     sheet_name="Preference")
 
     main_df.drop(['Unnamed: 0'], axis=1, inplace=True)
     print("length of db is = ", len(main_df))
@@ -210,7 +184,6 @@ def split_second_db():
     new_df = pd.DataFrame()
     preference = pd.DataFrame()
     for grade in GRADES:
-        # sheet = f"Grade {grade.upper()}"
         grade_sheet = main_df.iloc[
                     np.where(main_df.nutriscoregrade == grade)
                 ].sample(n=200, random_state=40)
@@ -218,17 +191,17 @@ def split_second_db():
         preference_sheet = grade_sheet.sample(n=60, random_state=10)
         preference = pd.concat([preference, preference_sheet])
 
-    new_df.to_csv("data\own_DB11.csv")
-    preference.to_csv("data\own_DB_preference11.csv")
+    # new_df.to_csv("data\own_DB22.csv")
+    # preference.to_csv("data\own_DB_preference22.csv")
     preference.reset_index(inplace=True, drop=True)
     return new_df, preference
 
 
 
 if __name__ == '__main__':
-    # ob1 = Additive(1)
-    # ob1.execute()
+    ob1 = Additive(1)
+    ob1.execute()
 
 
-    ob2 = Additive(2)
-    ob2.execute()
+    # ob2 = Additive(2)
+    # ob2.execute()
