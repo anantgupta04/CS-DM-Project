@@ -8,13 +8,14 @@ Created on Mon Nov 23 20:47:47 2020
 
 import pandas as pd
 import numpy as np
-
+from additive import PATH
 import re
+
 chars_to_remove = ['.', '-', '(', ')', '', ',']
 regular_expression = '[' + re.escape (''. join (chars_to_remove)) + ']'
 #df['string_col'].str.replace(regular_expression, '', regex=True)
 
-data = pd.read_csv("product_Germany_new_test1.csv")
+data = pd.read_csv(PATH + "product_Germany.csv")
 
 data['saturatedfat100g'] = data['Saturatedfat']
 data['energy100g'] = data['Energy'].str.split(' ').str[0]
