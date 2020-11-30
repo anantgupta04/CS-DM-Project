@@ -43,10 +43,8 @@ class Additive():
         self.eps = []
         self.dataset, self.preferences = pd.DataFrame(), pd.DataFrame()
 
-        self.U_x = []
-        self.U = pd.DataFrame()
-        self.global_utilities = []
-        self.marginal_utilities: Dict[str, LpVariable] = {}
+        self.U_x = [] # to store the global utility per food
+        self.U = pd.DataFrame() # to store the marginal_utilities per food
 
     def execute(self):
         self._setup()
@@ -68,6 +66,7 @@ class Additive():
             print("***"*20)
             self._save_results()
             self._plot_global_utility()
+            self._plot_attributes()
         return self.dataset
 
 
@@ -89,7 +88,7 @@ class Additive():
 
     def _objective_variables(self):
         # define the eps
-        self.eps = [LpVariable("epsilion_{}_{}".format(GRADES[i],GRADES[i+1]),
+        self.eps = [LpVariable(f"epsilion_{GRADES[i]}_{GRADES[i+1]}",
                         0,10) for i in range(len(GRADES)-1)]
         print("Eps = ", self.eps)
 
@@ -100,14 +99,11 @@ class Additive():
         self.U = pd.DataFrame(index=np.arange(self.samples),columns=FEATURES)
         # Pb. variables and utilities functions
         for ix,tup in self.dataset.iterrows():
-            varVariable = LpVariable("U_{}".format(ix), self.initial, self.terminal)
+            varVariable = LpVariable(f"U_{ix}", self.initial, self.terminal)
             self.U_x += [varVariable] # problem variables
-            self.global_utilities.append(varVariable)
             for crit in FEATURES:
                 k = f"utility_{crit}_{tup[crit]}_{ix}"
-                self.U[crit][ix] = self.marginal_utilities.setdefault(
-                        k,LpVariable(k,self.initial,self.terminal)
-                )
+                self.U[crit][ix] = LpVariable(k,self.initial,self.terminal)
 
         # Contraints associated to the global utility of each food
         for idx,name in enumerate(self.dataset.productname):
@@ -173,6 +169,15 @@ class Additive():
                                    hue="nutriscoregrade",palette="deep",
                                    data=self.dataset, ax=ax)
         sns_plot.get_figure().savefig(f"additive_score_inference.png")
+
+    def _plot_attributes(self):
+        for criterion in FEATURES:
+            values_df = self.dataset[[criterion]]
+            variable_values = [i.varValue for i in self.U[criterion]]
+
+            values_df["marginal_utility_value"] = variable_values
+            values_df.plot(kind="scatter", x=criterion, y="marginal_utility_value")
+            plt.savefig(f"{criterion}_mariginal_utility_plot.png")
 
     '''
     dataset.to_csv("calculated scores.csv")
