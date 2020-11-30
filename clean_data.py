@@ -9,6 +9,7 @@ Created on Mon Nov 23 20:47:47 2020
 import pandas as pd
 import numpy as np
 from additive import PATH
+import re
 
 chars_to_remove = ['.', '-', '(', ')', '', ',']
 regular_expression = '[' + re.escape (''. join (chars_to_remove)) + ']'
